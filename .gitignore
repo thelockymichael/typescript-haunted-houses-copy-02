@@ -1,0 +1,23 @@
+node_modules/
+.expo/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# macOS
+.DS_Store
+
+
+
+# ENV & serviceAccount.json
+.env
+serviceAccount.json
+
+# App.json & googleServices.json
+app.json
+google-services.json
