@@ -1,12 +1,4 @@
-import React, {
-  useEffect,
-  useContext,
-  useRef,
-  useCallback,
-  useState,
-} from 'react'
-import {StatusBar} from 'expo-status-bar'
-import firebase from 'firebase'
+import React, {useEffect, useContext, useState, createRef} from 'react'
 import 'firebase/storage'
 import {
   StyleSheet,
@@ -19,45 +11,28 @@ import {
   Dimensions,
   FlatList,
   TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
 } from 'react-native'
-import {
-  AntDesign,
-  Feather,
-  Fontisto,
-  Ionicons,
-  MaterialCommunityIcons,
-} from '@expo/vector-icons'
+import {Fontisto, MaterialCommunityIcons} from '@expo/vector-icons'
 
 import {
+  AbandondedPlaceBar,
+  AbandonedPlaceCommentInput,
+  AbandonedPlaceComments,
+  BottomPopup,
   ButtonWithIcon,
   CommentField,
   CommentItem,
-  ErrorMessage,
+  CustomAlert,
+  CustomAlertProps,
   FormButton,
-  FormInput,
   Header,
-  LocationPicker,
 } from '../../../components'
 import {AbandonedPlaceModel, logOut} from '../../../redux'
 import {PlaceCard} from '../../../components/PlaceCard'
 import {List, Divider} from 'react-native-paper'
 
-import {
-  launchImageLibraryAsync,
-  MediaTypeOptions,
-  requestMediaLibraryPermissionsAsync,
-} from 'expo-image-picker'
-import {
-  likeAbandonedPlace,
-  updateAbandonedPlace,
-} from '../../../controllers/abandonedPlacesController'
-import {ScreenStackHeaderBackButtonImage} from 'react-native-screens'
-
-import {scrollInterpolator, animatedStyles} from '../../../../utils/animations'
-
-import * as Location from 'expo-location'
+import {updateAbandonedPlace} from '../../../controllers/abandonedPlacesController'
 
 import {GOOGLE_API} from '@env'
 import {color} from '../../../constants'
@@ -77,16 +52,13 @@ interface AbandondedPlaceDetailsProps {
   }
   route: {params: {item: AbandonedPlaceModel}}
 }
-// const dummyData = {
-//   name: 'Saviton talo',
-//   description: 'Pelottava paikka',
-//   location: [23.1231, 23.312512],
-//   imageUrls: ['dasdjashd', 'dasdhsauhdusa'],
-// }
 
 import {CommentModel, Rating} from '../../../redux/models'
 
-import {updateComment} from '../../../controllers/commentController'
+import {
+  deleteComment,
+  updateComment,
+} from '../../../controllers/commentController'
 
 const AbandondedPlaceDetails: React.FC<AbandondedPlaceDetailsProps> = ({
   navigation,
@@ -99,73 +71,28 @@ const AbandondedPlaceDetails: React.FC<AbandondedPlaceDetailsProps> = ({
   const {item} = route.params
 
   // 1. Rating: likes, dislikes
-  const [rating, setRating] = useState<Rating>()
-  const [likeIsToggled, toggleLike] = useState(false)
-  const [dislikeIsToggled, toggleDislike] = useState(false)
+
   // END
 
   // 2. Commenting
   const [comment, setComment] = useState<string>('')
-  const [comments, setComments] = useState<CommentModel[]>([])
+  const [submitToggle, setSubmitToggle] = useState<boolean>(true)
 
-  // console.log(moment(new Date()).fromNow(true))
+  // 3. Popup list
+  const [popUpList, setPopUpList] = useState([])
 
-  useEffect(() => {
-    // reverseGeocodeAsync()
-
-    const ratingListener = firebase
-      .firestore()
-      .collection('abandonedPlaces')
-      .doc(item.id)
-      .onSnapshot((querySnapshot) => {
-        const firebaseData = querySnapshot.data() as AbandonedPlaceModel
-
-        const hasLiked = firebaseData.rating.likes.some(
-          (userId) => userId === user.id
-        )
-        const hasDisliked = firebaseData.rating.dislikes.some(
-          (userId) => userId === user.id
-        )
-
-        if (hasLiked) toggleLike(true)
-
-        if (hasDisliked) toggleDislike(true)
-
-        setRating(firebaseData.rating)
-      })
-
-    return () => ratingListener()
-  }, [])
-
-  useEffect(() => {
-    const commentsListener = firebase
-      .firestore()
-      .collection('abandonedPlaces')
-      .doc(item.id)
-      .collection('comments')
-      .orderBy('createdAt', 'asc')
-      .onSnapshot((querySnapshot) => {
-        const comments = querySnapshot.docs.map((doc) => {
-          return {
-            ...doc.data(),
-          }
-        })
-
-        setComments(comments)
-        // const firebaseData = querySnapshot.data() as AbandonedPlaceModel
-        // const hasLiked = firebaseData.rating.likes.some(
-        //   (userId) => userId === user.id
-        // )
-        // const hasDisliked = firebaseData.rating.dislikes.some(
-        //   (userId) => userId === user.id
-        // )
-        // if (hasLiked) toggleLike(true)
-        // if (hasDisliked) toggleDislike(true)
-        // setRating(firebaseData.rating)
-      })
-
-    return () => commentsListener()
-  }, [])
+  /// 4. Alert Modal Visibility
+  const [modal, setModal] = useState<CustomAlertProps>({
+    onPressNegativeButton: () => onPressAlertNegativeButton(),
+    onPressPositiveButton: () => onPressAlertPositiveButton(),
+    displayAlert: false,
+    alertTitleText: '',
+    alertMessageText: '',
+    displayPositiveButton: false,
+    positiveButtonText: '',
+    displayNegativeButton: false,
+    negativeButtonText: '',
+  })
 
   const reverseGeocodeAsync = async () => {
     fetch(
@@ -180,54 +107,88 @@ const AbandondedPlaceDetails: React.FC<AbandondedPlaceDetailsProps> = ({
       })
   }
 
-  const likePost = async () => {
-    item.rating.likes.push(user.id)
+  // 1. Rating: likes & dislikes ENDS HERE //
 
-    await updateAbandonedPlace(item)
+  let popUpRef = createRef()
 
-    toggleLike(true)
-    toggleDislike(false)
-
-    // If already disliked remove dislike and toggle like button instead
-    if (dislikeIsToggled) {
-      const newArr = item.rating.dislikes.filter((userId) => userId !== user.id)
-
-      item.rating.dislikes = newArr
-
-      await updateAbandonedPlace(item)
-    }
+  // Popup menu
+  const onShowPopUp = (comment: CommentModel): void => {
+    setPopUpList([
+      {
+        id: 1,
+        name: 'Delete comment',
+        onTap: () => onDeleteComment(comment),
+      },
+    ])
+    popUpRef.show()
   }
 
-  const dislikePost = async () => {
-    item.rating.dislikes.push(user.id)
+  // Delete alert dialog
+  const onDeleteComment = (comment: CommentModel) => {
+    // setModalVisible(true)
 
-    await updateAbandonedPlace(item)
+    console.log('modalVisible 1', modal)
 
-    toggleDislike(true)
-    toggleLike(false)
-
-    // If already liked, remove like and toggle dislike button instead
-    if (likeIsToggled) {
-      const newArr = item.rating.likes.filter((userId) => userId !== user.id)
-
-      item.rating.likes = newArr
-
-      await updateAbandonedPlace(item)
-    }
+    setModal({
+      onPressNegativeButton: () => onPressAlertNegativeButton(),
+      onPressPositiveButton: async () => {
+        deleteComment(item.id, comment)
+        onPressAlertPositiveButton()
+      },
+      displayAlert: true,
+      alertTitleText: 'Delete',
+      alertMessageText: 'Are you sure you want to delete this message?',
+      displayPositiveButton: true,
+      positiveButtonText: 'OK',
+      displayNegativeButton: true,
+      negativeButtonText: 'CANCEL',
+    })
   }
 
-  const submitComment = async () => {
+  const validateCommentText = (text: string) => {
+    console.log('text', text)
+    console.log('is text empty? ""', text.length)
+
+    if (text.length > 0) {
+      setSubmitToggle(false)
+    } else if (text.length === 0) {
+      setSubmitToggle(true)
+    }
+
+    setComment(text)
+  }
+
+  const submitComment = async (): Promise<void> => {
     await updateComment(item.id, {
       username: 'MISKA', // TODO Change 'MISKA' to real username
       commentText: comment,
+      rating: {
+        likes: [],
+        dislikes: [],
+      },
     } as CommentModel)
 
-    setComment('')
+    validateCommentText('')
+  }
+
+  const onClosePopup = () => {
+    popUpRef.close()
+  }
+
+  const onPressAlertPositiveButton = () => {
+    // alert('Positive Button Clicked')
+    setModal({...modal, displayAlert: false})
+  }
+
+  const onPressAlertNegativeButton = () => {
+    // alert('Negative Button Clicked')
+    setModal({...modal, displayAlert: false})
   }
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 40}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <Header
@@ -272,189 +233,33 @@ const AbandondedPlaceDetails: React.FC<AbandondedPlaceDetailsProps> = ({
             />
           </View>
           <View style={styles.bodyContent}>
-            <View
-              style={{
-                alignItems: 'center',
-                flexDirection: 'row',
-                height: 50,
-                marginHorizontal: 20,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flex: 1,
-                  justifyContent: 'flex-start',
-                }}
-              >
-                <View
-                  style={{
-                    paddingRight: 20,
-                  }}
-                >
-                  <ButtonWithIcon
-                    icon={
-                      <MaterialCommunityIcons
-                        name={'arrow-up-thick'}
-                        size={32}
-                        color={
-                          likeIsToggled
-                            ? color.greyedOutColor
-                            : color.secondaryColor
-                        }
-                      />
-                    }
-                    disabled={likeIsToggled}
-                    iconText={rating?.likes.length}
-                    onTap={likePost}
-                  />
-                </View>
-                <ButtonWithIcon
-                  icon={
-                    <MaterialCommunityIcons
-                      name={'arrow-down-thick'}
-                      size={32}
-                      color={
-                        dislikeIsToggled
-                          ? color.greyedOutColor
-                          : color.secondaryColor
-                      }
-                    />
-                  }
-                  disabled={dislikeIsToggled}
-                  iconText={rating?.dislikes.length}
-                  onTap={dislikePost}
-                />
-              </View>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flex: 1,
-                  justifyContent: 'flex-end',
-                }}
-              >
-                <View
-                  style={{
-                    paddingRight: 10,
-                  }}
-                >
-                  <ButtonWithIcon
-                    icon={
-                      <MaterialCommunityIcons
-                        name={'comment'}
-                        size={26}
-                        color={color.secondaryColor}
-                      />
-                    }
-                    // disabled={likeIsToggled}
-                    iconText={200}
-                    onTap={() => {}}
-                  />
-                </View>
-
-                <View
-                  style={{
-                    paddingRight: 10,
-                  }}
-                >
-                  <ButtonWithIcon
-                    icon={
-                      <MaterialCommunityIcons
-                        name={'map-marker-radius'}
-                        size={26}
-                        color={color.secondaryColor}
-                      />
-                    }
-                    onTap={() =>
-                      navigation.navigate('ShowLocationPage', {
-                        placeCoordinates: item.location,
-                        name: item.name,
-                      })
-                    }
-                  />
-                </View>
-                <ButtonWithIcon
-                  icon={
-                    <Fontisto
-                      name={'share'}
-                      size={26}
-                      color={color.secondaryColor}
-                    />
-                  }
-                  iconText={'SHARE'}
-                  onTap={() => {}}
-                />
-              </View>
-            </View>
-
-            <View
-              style={{
-                height: 1,
-                shadowColor: 'black',
-                shadowOffset: {
-                  width: 0,
-                  height: 2,
-                },
-                shadowOpacity: 0.1, // IOS (?)
-                shadowRadius: 1.84, // IOS
-                elevation: 1, // ANDROID
-              }}
+            <AbandondedPlaceBar
+              navigation={navigation}
+              item={route.params.item}
+              user={user}
             />
-
-            {/* <Text style={styles.description}>{item.description}</Text> */}
-
-            {addresses !== undefined &&
-              addresses.map((address, index) => (
-                <Text key={index} style={styles.location}>
-                  {address}
-                </Text>
-              ))}
-
-            <View style={{flex: 0}}>
-              <FlatList
-                data={comments}
-                inverted={true}
-                ItemSeparatorComponent={() => <Divider />}
-                renderItem={({item}) => <CommentItem {...item} />}
-              />
-            </View>
+            <AbandonedPlaceComments
+              user={user}
+              abandonedPlaceID={item.id}
+              onShowPopUp={onShowPopUp}
+            />
           </View>
         </View>
       </ScrollView>
-      <View style={styles.formControl}>
-        <View style={{flex: 9}}>
-          <CommentField
-            blurOnSubmit
-            autoCapitalize="none"
-            autoCorrect={false}
-            maxLength={100}
-            value={comment}
-            onChangeText={(text) => setComment(text)}
-            keyboardType="default"
-            onEndEditing={() => console.log('onEndEditing')}
-            onSubmitEditing={() => console.log('onSubmitEditing')}
-            placeholder={'Enter some text...'}
-          />
-        </View>
-
-        <View style={{flex: 1}}>
-          <ButtonWithIcon
-            icon={
-              <MaterialCommunityIcons
-                name={'send'}
-                size={20}
-                color={
-                  color.bgColor
-                  // likeIsToggled ? color.greyedOutColor : color.secondaryColor
-                }
-              />
-            }
-            // disabled={likeIsToggled}
-            onTap={submitComment}
-          />
-        </View>
-      </View>
+      <AbandonedPlaceCommentInput
+        comment={comment}
+        setComment={setComment}
+        submitComment={submitComment}
+        submitToggle={submitToggle}
+        validateCommentText={validateCommentText}
+      />
+      <BottomPopup
+        title="Demo Popup"
+        ref={(target) => (popUpRef = target)}
+        onTouchOutside={onClosePopup}
+        data={popUpList}
+      />
+      <CustomAlert {...modal} />
     </KeyboardAvoidingView>
   )
 }
@@ -490,12 +295,6 @@ const styles = StyleSheet.create({
   },
   description: {fontSize: 20, fontFamily: 'open-sans-regular'},
   location: {fontSize: 18, fontFamily: 'open-sans-regular'},
-  formControl: {
-    height: 60,
-    backgroundColor: color.primaryColor,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
 })
 
 export {AbandondedPlaceDetails}

@@ -19,6 +19,7 @@ const ButtonWithIcon: React.FC<ButtonProps> = ({
 }) => {
   let iconTextContainer = null
 
+  // Create empty space if iconText and iconText are defined
   if (iconText !== undefined && iconText !== null) {
     iconTextContainer = (
       <View style={styles.iconTextContainer}>

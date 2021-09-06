@@ -25,6 +25,7 @@ interface HomeAbandonedPlacesProps {
   navigation: {
     openDrawer: Function
     navigate: Function
+    goBack: Function
   }
 }
 
@@ -94,18 +95,7 @@ const HomeAbandonedPlacesScreen: React.FC<HomeAbandonedPlacesProps> = ({
         headerLeftNavigation={() => navigation?.goBack()}
         headerLeft="keyboard-backspace"
       /> */}
-      <Header
-        headerTitle={''}
-        headerLeft={
-          <TouchableOpacity onPress={() => navigation?.goBack()}>
-            <MaterialCommunityIcons
-              name={'keyboard-backspace'}
-              size={32}
-              color={color.secondaryColor}
-            />
-          </TouchableOpacity>
-        }
-      />
+      <Header navigation={navigation} />
       <View style={styles.body}>
         <FlatList
           data={places}

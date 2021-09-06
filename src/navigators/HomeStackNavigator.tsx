@@ -6,6 +6,7 @@ import {
   AbandondedPlaceDetails,
   AbandonedPlacesEdit,
   AbandonedPlacesScreen,
+  AbandonedPlaceThread,
   HomeAbandonedPlacesScreen,
   HomeScreen,
 } from '../screens'
@@ -37,6 +38,10 @@ const HomeStackNavigator = () => {
       <HomeStack.Screen
         name="HomeAbandonedPlaceDetailsPage"
         component={AbandondedPlaceDetails}
+      />
+      <HomeStack.Screen
+        name="HomeAbandonedPlaceThreadPage"
+        component={AbandonedPlaceThread}
       />
       <HomeStack.Screen
         name="AbandonedPlacesEditPage"

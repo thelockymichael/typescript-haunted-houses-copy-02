@@ -19,3 +19,14 @@ export * from './ButtonWithIcon'
 // Post Commenting
 export * from './comments/CommentItem'
 export * from './comments/CommentField'
+
+// Bottom popup
+export * from './BottomPopup'
+
+// Custom alert
+export * from './CustomAlert'
+
+/* 1. Abandeond Place Detail Components */
+export * from './abandonedPlaceDetails/AbandonedPlaceBar'
+export * from './abandonedPlaceDetails/AbandonedPlaceComments'
+export * from './abandonedPlaceDetails/AbandonedPlaceCommentInput'

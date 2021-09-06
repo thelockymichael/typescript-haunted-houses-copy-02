@@ -14,7 +14,7 @@ import {
 } from 'react-native'
 
 interface CommentFieldProps {
-  style: ViewStyle
+  style?: ViewStyle
   input?: ViewStyle
   onChangeText: (text: string) => void
   value: string

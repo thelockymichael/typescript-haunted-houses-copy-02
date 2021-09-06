@@ -1,11 +1,10 @@
 import firebase from 'firebase'
+import {Rating} from '../place/AbandonedPlaceModel'
 
 export interface CommentModel {
   id?: string
   username: string
   commentText: string
   createdAt?: firebase.firestore.Timestamp
-  likes: number
-  dislikes: number
-  replies?: CommentModel[]
+  rating: Rating
 }

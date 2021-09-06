@@ -8,29 +8,35 @@ import {
   TextInput,
   Image,
 } from 'react-native'
+import {useNavigation} from '../../utils'
 import {color} from '../constants'
 import {ButtonWithIcon} from './ButtonWithIcon'
 
 interface HeaderProps {
-  headerLeft: JSX.Element
+  headerLeft?: JSX.Element
   headerTitle?: string
   backgroundColor?: string
   headerRight?: JSX.Element
+  navigation?: {
+    goBack: Function
+  }
 }
 const Header: React.FC<HeaderProps> = ({
   headerLeft,
   headerTitle,
   headerRight,
+  navigation,
   backgroundColor,
 }) => {
+  const {} = useNavigation()
   // 1. Open Drawer Menu
 
   // 2. Forward Method =>
 
   // let setTitle = typeof title === 'string' && title !== undefined ? title : ''
 
-  return (
-    <View style={styles.navigation}>
+  if (!headerLeft && !headerTitle) {
+    return (
       <View style={styles.header}>
         <View
           style={{
@@ -39,7 +45,52 @@ const Header: React.FC<HeaderProps> = ({
             alignItems: 'center',
           }}
         >
-          {headerLeft}
+          <TouchableOpacity onPress={() => navigation?.goBack()}>
+            <MaterialCommunityIcons
+              name={'keyboard-backspace'}
+              size={32}
+              color={color.secondaryColor}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {!headerRight ? (
+          <View
+            style={{
+              width: 32,
+              height: 32.7,
+            }}
+          />
+        ) : (
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            {headerRight}
+          </View>
+        )}
+      </View>
+    )
+  } else if (!headerLeft && headerTitle) {
+    return (
+      <View style={styles.header}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+          }}
+        >
+          <TouchableOpacity onPress={() => navigation?.goBack()}>
+            <MaterialCommunityIcons
+              name={'keyboard-backspace'}
+              size={32}
+              color={color.secondaryColor}
+            />
+          </TouchableOpacity>
         </View>
 
         <View
@@ -79,6 +130,57 @@ const Header: React.FC<HeaderProps> = ({
           </View>
         )}
       </View>
+    )
+  }
+
+  return (
+    <View style={styles.header}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+        }}
+      >
+        {headerLeft}
+      </View>
+
+      <View
+        style={{
+          flex: 1,
+          marginLeft: 10,
+          justifyContent: 'center',
+        }}
+      >
+        <Text
+          style={{
+            textAlign: 'center',
+            fontFamily: 'open-sans-semi-bold',
+            fontSize: 18,
+          }}
+        >
+          {headerTitle}
+        </Text>
+      </View>
+
+      {!headerRight ? (
+        <View
+          style={{
+            width: 32,
+            height: 32.7,
+          }}
+        />
+      ) : (
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          {headerRight}
+        </View>
+      )}
     </View>
   )
 }

@@ -14,6 +14,7 @@
     "test:parallel": "npm run web:server & npm run web & npm run cypress:run"
   },
   "dependencies": {
+    "@expo/ngrok": "^2.4.3",
     "@expo/vector-icons": "^12.0.4",
     "@expo/webpack-config": "^0.12.70",
     "@react-native-community/masked-view": "^0.1.10",

@@ -11,11 +11,86 @@ import {
 } from 'react-native'
 import {color} from '../../constants'
 import {ButtonWithIcon} from '../ButtonWithIcon'
-import {CommentModel} from '../../redux'
-import moment from 'moment'
 
-const CommentItem: React.FC<CommentModel> = (item) => {
-  console.log('item username', item)
+import moment from 'moment'
+import {AbandonedPlaceModel, CommentModel, Rating, UserModel} from '../../redux'
+import {updateComment} from '../../controllers/commentController'
+import {useNavigation} from '../../../utils'
+
+interface CommentItemProps {
+  onShowPopUp: (comment: CommentModel) => void
+  commentItem: CommentModel
+  abandonedPlaceID?: string
+  user: UserModel
+  navigation?: {
+    popToTop: Function
+    setOptions: Function
+    goBack: Function
+    navigate: Function
+  }
+}
+
+const CommentItem: React.FC<CommentItemProps> = ({
+  onShowPopUp,
+  commentItem,
+  abandonedPlaceID,
+  user,
+}) => {
+  const {navigate} = useNavigation()
+
+  const [likeIsToggled, toggleLike] = useState<boolean>(false)
+  const [dislikeIsToggled, toggleDislike] = useState<boolean>(false)
+
+  useEffect(() => {
+    const {likes, dislikes} = commentItem.rating
+
+    const hasLiked = likes.some((userId) => userId === user.id)
+    const hasDisliked = dislikes.some((userId) => userId === user.id)
+
+    if (hasLiked) toggleLike(true)
+
+    if (hasDisliked) toggleDislike(true)
+  }, [])
+
+  const onLikeComment = async () => {
+    commentItem.rating.likes.push(user.id)
+
+    await updateComment(abandonedPlaceID, commentItem)
+
+    toggleLike(true)
+    toggleDislike(false)
+
+    // If already disliked remove dislike and toggle like button instead
+    if (dislikeIsToggled) {
+      const newArr = commentItem.rating.dislikes.filter(
+        (userId) => userId !== user.id
+      )
+
+      commentItem.rating.dislikes = newArr
+
+      await updateComment(abandonedPlaceID, commentItem)
+    }
+  }
+
+  const onDislikeComment = async () => {
+    commentItem.rating.dislikes.push(user.id)
+
+    await updateComment(abandonedPlaceID, commentItem)
+
+    toggleDislike(true)
+    toggleLike(false)
+
+    // If already liked, remove like and toggle dislike button instead
+    if (likeIsToggled) {
+      const newArr = commentItem.rating.likes.filter(
+        (userId) => userId !== user.id
+      )
+
+      commentItem.rating.likes = newArr
+
+      await updateComment(abandonedPlaceID, commentItem)
+    }
+  }
 
   return (
     <View
@@ -47,15 +122,15 @@ const CommentItem: React.FC<CommentModel> = (item) => {
           }}
         >
           <View>
-            <Text>{item.username},</Text>
+            <Text>{commentItem.username},</Text>
           </View>
           <View style={{paddingLeft: 4}}>
-            <Text>{moment(item.createdAt?.toDate()).fromNow()}</Text>
+            <Text>{moment(commentItem.createdAt?.toDate()).fromNow()}</Text>
           </View>
         </View>
         <View style={{flexDirection: 'row'}}>
           <View>
-            <Text>{item.commentText}</Text>
+            <Text>{commentItem.commentText}</Text>
           </View>
         </View>
         <View
@@ -66,7 +141,18 @@ const CommentItem: React.FC<CommentModel> = (item) => {
           }}
         >
           <View>
-            <Text>Reply</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigate('HomeAbandonedPlaceThreadPage', {
+                  commentItem,
+                  abandonedPlaceID,
+                  onShowPopUp,
+                  user,
+                })
+              }
+            >
+              <Text>Reply</Text>
+            </TouchableOpacity>
           </View>
           <View>
             <ButtonWithIcon
@@ -74,11 +160,14 @@ const CommentItem: React.FC<CommentModel> = (item) => {
                 <MaterialCommunityIcons
                   name={'arrow-up-thick'}
                   size={20}
-                  color={color.secondaryColor}
+                  color={
+                    likeIsToggled ? color.greyedOutColor : color.secondaryColor
+                  }
                 />
               }
-              iconText={item.likes}
-              onTap={() => {}}
+              disabled={likeIsToggled}
+              iconText={commentItem.rating.likes.length}
+              onTap={onLikeComment}
               otherStyle={{
                 height: 20,
               }}
@@ -90,11 +179,16 @@ const CommentItem: React.FC<CommentModel> = (item) => {
                 <MaterialCommunityIcons
                   name={'arrow-down-thick'}
                   size={20}
-                  color={color.secondaryColor}
+                  color={
+                    dislikeIsToggled
+                      ? color.greyedOutColor
+                      : color.secondaryColor
+                  }
                 />
               }
-              iconText={item.dislikes}
-              onTap={() => {}}
+              disabled={dislikeIsToggled}
+              iconText={commentItem.rating.dislikes.length}
+              onTap={onDislikeComment}
               otherStyle={{
                 height: 20,
               }}
@@ -109,7 +203,7 @@ const CommentItem: React.FC<CommentModel> = (item) => {
                   color={color.secondaryColor}
                 />
               }
-              onTap={() => {}}
+              onTap={() => onShowPopUp(commentItem)}
               otherStyle={{
                 height: 20,
               }}
