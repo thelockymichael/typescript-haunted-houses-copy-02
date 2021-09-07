@@ -24,7 +24,7 @@ const AbandonedPlaceComments: React.FC<IProps> = ({
   onShowPopUp,
   user,
 }) => {
-  const [comments, setComments] = useState([])
+  const [comments, setComments] = useState<CommentModel[]>([])
   const [submitToggle, setSubmitToggle] = useState<boolean>(true)
 
   useEffect(() => {
@@ -42,14 +42,6 @@ const AbandonedPlaceComments: React.FC<IProps> = ({
         })
 
         setComments(comments)
-        /**
-         *   id?: string
-  username: string
-  commentText: string
-  createdAt?: firebase.firestore.Timestamp
-  likes: number
-  dislikes: number
-         */
       })
 
     return () => commentsListener()

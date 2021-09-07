@@ -1,4 +1,6 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useContext} from 'react'
+import firebase from 'firebase'
+
 import {
   StyleSheet,
   View,
@@ -10,6 +12,8 @@ import {
 import {Divider} from 'react-native-paper'
 import {CommentItem, Header} from '../../../components'
 import {color} from '../../../constants'
+import {UserContext} from '../../../contexts/contexts'
+import {getComment} from '../../../controllers/commentController'
 import {CommentModel, UserModel} from '../../../redux'
 
 interface IProps {
@@ -20,20 +24,40 @@ interface IProps {
   }
   route: {
     params: {
-      commentItem: CommentModel
       abandonedPlaceID?: string
-      onShowPopUp: (comment: CommentModel) => void
-      user: UserModel
+      commentItem: CommentModel
+      // onShowPopUp: (comment: CommentModel) => void
+      // user: UserModel
     }
   }
 }
 const AbandonedPlaceThread: React.FC<IProps> = ({navigation, route}) => {
-  const {abandonedPlaceID, commentItem, user, onShowPopUp} = route.params
+  const {abandonedPlaceID, commentItem} = route.params
+
+  const {user} = useContext(UserContext)
+
+  const [comment, setComment] = useState<CommentModel>(commentItem)
 
   console.log('commentItem Thread-423', commentItem)
   console.log('commentItem user-423', user)
-  console.log('commentItem onShowpopup-423', onShowPopUp)
-  console.log('commentItem navigation-423', navigation)
+  // console.log('commentItem onShowpopup-423', onShowPopUp)
+  // console.log('commentItem navigation-423', navigation)
+
+  useEffect(() => {
+    const commentsListener = firebase
+      .firestore()
+      .collection('abandonedPlaces')
+      .doc(abandonedPlaceID)
+      .collection('comments')
+      .doc(commentItem.id)
+      .onSnapshot((querySnapshot) => {
+        const comment = querySnapshot.data()
+
+        setComment(comment)
+      })
+
+    return () => commentsListener()
+  }, [])
 
   return (
     <View style={styles.container}>
@@ -42,15 +66,9 @@ const AbandonedPlaceThread: React.FC<IProps> = ({navigation, route}) => {
         user={user}
         abandonedPlaceID={abandonedPlaceID}
         commentItem={commentItem}
-        onShowPopUp={onShowPopUp}
+        // onShowPopUp={onShowPopUp}
       />
       <Divider />
-      {/* <CommentItem
-        user={user}
-        abandonedPlaceID={abandonedPlaceID}
-        commentItem={item}
-        onShowPopUp={onShowPopUp}
-      /> */}
     </View>
   )
 }

@@ -18,18 +18,43 @@ export const updateComment = async (
   abandonedPlaceID: string | undefined,
   comment: CommentModel
 ) => {
-  if (comment.id === undefined) {
-    comment.id = v4()
-    comment.createdAt = firebase.firestore.Timestamp.fromDate(new Date())
+  try {
+    if (comment.id === undefined) {
+      comment.id = v4()
+      comment.createdAt = firebase.firestore.Timestamp.fromDate(new Date())
+    }
+
+    let commentRef = db
+      .collection('abandonedPlaces')
+      .doc(abandonedPlaceID)
+      .collection('comments')
+      .doc(comment.id)
+
+    commentRef.withConverter(commentConverter).set(comment, {
+      merge: true,
+    })
+  } catch (error) {
+    console.error('Error writing document: ', error)
+    return
   }
+}
 
-  let commentRef = db
-    .collection('abandonedPlaces')
-    .doc(abandonedPlaceID)
-    .collection('comments')
-    .doc(comment.id)
+export const getComment = async (
+  abandonedPlaceID: string | undefined,
+  commentId: string
+) => {
+  try {
+    let doc = await db
+      .collection('abandonedPlaces')
+      .doc(abandonedPlaceID)
+      .collection('comments')
+      .doc(commentId)
+      .withConverter(commentConverter)
+      .get()
 
-  commentRef.withConverter(commentConverter).set(comment, {
-    merge: true,
-  })
+    return doc.data()
+  } catch (error) {
+    console.error('Error writing document: ', error)
+    return
+  }
 }

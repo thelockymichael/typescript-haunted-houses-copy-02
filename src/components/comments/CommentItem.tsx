@@ -38,58 +38,27 @@ const CommentItem: React.FC<CommentItemProps> = ({
 }) => {
   const {navigate} = useNavigation()
 
-  const [likeIsToggled, toggleLike] = useState<boolean>(false)
-  const [dislikeIsToggled, toggleDislike] = useState<boolean>(false)
+  const {likes, dislikes} = commentItem.rating
 
-  useEffect(() => {
-    const {likes, dislikes} = commentItem.rating
-
-    const hasLiked = likes.some((userId) => userId === user.id)
-    const hasDisliked = dislikes.some((userId) => userId === user.id)
-
-    if (hasLiked) toggleLike(true)
-
-    if (hasDisliked) toggleDislike(true)
-  }, [])
+  const isLiked = likes.some((userId) => userId === user.id)
+  const isDisliked = dislikes.some((userId) => userId === user.id)
 
   const onLikeComment = async () => {
     commentItem.rating.likes.push(user.id)
-
+    const newArr = commentItem.rating.dislikes.filter(
+      (userId) => userId !== user.id
+    )
+    commentItem.rating.dislikes = newArr
     await updateComment(abandonedPlaceID, commentItem)
-
-    toggleLike(true)
-    toggleDislike(false)
-
-    // If already disliked remove dislike and toggle like button instead
-    if (dislikeIsToggled) {
-      const newArr = commentItem.rating.dislikes.filter(
-        (userId) => userId !== user.id
-      )
-
-      commentItem.rating.dislikes = newArr
-
-      await updateComment(abandonedPlaceID, commentItem)
-    }
   }
 
   const onDislikeComment = async () => {
     commentItem.rating.dislikes.push(user.id)
-
+    const newArr = commentItem.rating.likes.filter(
+      (userId) => userId !== user.id
+    )
+    commentItem.rating.likes = newArr
     await updateComment(abandonedPlaceID, commentItem)
-
-    toggleDislike(true)
-    toggleLike(false)
-
-    // If already liked, remove like and toggle dislike button instead
-    if (likeIsToggled) {
-      const newArr = commentItem.rating.likes.filter(
-        (userId) => userId !== user.id
-      )
-
-      commentItem.rating.likes = newArr
-
-      await updateComment(abandonedPlaceID, commentItem)
-    }
   }
 
   return (
@@ -144,10 +113,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
             <TouchableOpacity
               onPress={() =>
                 navigate('HomeAbandonedPlaceThreadPage', {
-                  commentItem,
                   abandonedPlaceID,
-                  onShowPopUp,
-                  user,
+                  commentItem,
                 })
               }
             >
@@ -161,11 +128,12 @@ const CommentItem: React.FC<CommentItemProps> = ({
                   name={'arrow-up-thick'}
                   size={20}
                   color={
-                    likeIsToggled ? color.greyedOutColor : color.secondaryColor
+                    isLiked ? color.greyedOutColor : color.secondaryColor
+                    // likeIsToggled ? color.greyedOutColor : color.secondaryColor
                   }
                 />
               }
-              disabled={likeIsToggled}
+              disabled={isLiked}
               iconText={commentItem.rating.likes.length}
               onTap={onLikeComment}
               otherStyle={{
@@ -180,13 +148,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
                   name={'arrow-down-thick'}
                   size={20}
                   color={
-                    dislikeIsToggled
-                      ? color.greyedOutColor
-                      : color.secondaryColor
+                    isDisliked ? color.greyedOutColor : color.secondaryColor
                   }
                 />
               }
-              disabled={dislikeIsToggled}
+              disabled={isDisliked}
               iconText={commentItem.rating.dislikes.length}
               onTap={onDislikeComment}
               otherStyle={{

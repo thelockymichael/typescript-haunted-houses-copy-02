@@ -30,6 +30,10 @@ const AbandondedPlaceBar: React.FC<IProps> = ({item, user, navigation}) => {
   const [likeIsToggled, toggleLike] = useState<boolean>(false)
   const [dislikeIsToggled, toggleDislike] = useState<boolean>(false)
 
+  const isLiked = rating?.likes.some((userId) => userId === user.id)
+
+  const isDisliked = rating?.dislikes.some((userId) => userId === user.id)
+
   useEffect(() => {
     // reverseGeocodeAsync()
 
@@ -40,16 +44,16 @@ const AbandondedPlaceBar: React.FC<IProps> = ({item, user, navigation}) => {
       .onSnapshot((querySnapshot) => {
         const firebaseData = querySnapshot.data() as AbandonedPlaceModel
 
-        const hasLiked = firebaseData.rating.likes.some(
-          (userId) => userId === user.id
-        )
-        const hasDisliked = firebaseData.rating.dislikes.some(
-          (userId) => userId === user.id
-        )
+        // const hasLiked = firebaseData.rating.likes.some(
+        //   (userId) => userId === user.id
+        // )
+        // const hasDisliked = firebaseData.rating.dislikes.some(
+        //   (userId) => userId === user.id
+        // )
 
-        if (hasLiked) toggleLike(true)
+        // if (hasLiked) toggleLike(true)
 
-        if (hasDisliked) toggleDislike(true)
+        // if (hasDisliked) toggleDislike(true)
 
         setRating(firebaseData.rating)
       })
@@ -59,38 +63,18 @@ const AbandondedPlaceBar: React.FC<IProps> = ({item, user, navigation}) => {
 
   const likePost = async () => {
     item.rating.likes.push(user.id)
+    const newArr = item.rating.dislikes.filter((userId) => userId !== user.id)
+    item.rating.dislikes = newArr
 
     await updateAbandonedPlace(item)
-
-    toggleLike(true)
-    toggleDislike(false)
-
-    // If already disliked remove dislike and toggle like button instead
-    if (dislikeIsToggled) {
-      const newArr = item.rating.dislikes.filter((userId) => userId !== user.id)
-
-      item.rating.dislikes = newArr
-
-      await updateAbandonedPlace(item)
-    }
   }
 
   const dislikePost = async () => {
     item.rating.dislikes.push(user.id)
+    const newArr = item.rating.likes.filter((userId) => userId !== user.id)
+    item.rating.likes = newArr
 
     await updateAbandonedPlace(item)
-
-    toggleDislike(true)
-    toggleLike(false)
-
-    // If already liked, remove like and toggle dislike button instead
-    if (likeIsToggled) {
-      const newArr = item.rating.likes.filter((userId) => userId !== user.id)
-
-      item.rating.likes = newArr
-
-      await updateAbandonedPlace(item)
-    }
   }
 
   return (
@@ -120,12 +104,10 @@ const AbandondedPlaceBar: React.FC<IProps> = ({item, user, navigation}) => {
                 <MaterialCommunityIcons
                   name={'arrow-up-thick'}
                   size={32}
-                  color={
-                    likeIsToggled ? color.greyedOutColor : color.secondaryColor
-                  }
+                  color={isLiked ? color.greyedOutColor : color.secondaryColor}
                 />
               }
-              disabled={likeIsToggled}
+              disabled={isLiked}
               iconText={rating?.likes.length}
               onTap={likePost}
             />
@@ -135,12 +117,10 @@ const AbandondedPlaceBar: React.FC<IProps> = ({item, user, navigation}) => {
               <MaterialCommunityIcons
                 name={'arrow-down-thick'}
                 size={32}
-                color={
-                  dislikeIsToggled ? color.greyedOutColor : color.secondaryColor
-                }
+                color={isDisliked ? color.greyedOutColor : color.secondaryColor}
               />
             }
-            disabled={dislikeIsToggled}
+            disabled={isDisliked}
             iconText={rating?.dislikes.length}
             onTap={dislikePost}
           />
