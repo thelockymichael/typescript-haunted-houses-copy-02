@@ -39,6 +39,38 @@ export const updateComment = async (
   }
 }
 
+export const updateCommentOfComment = async (
+  abandonedPlaceID: string | undefined,
+  comment: CommentModel,
+  replyComment: CommentModel
+) => {
+  try {
+    if (replyComment?.id === undefined) {
+      replyComment.id = v4()
+      replyComment.createdAt = firebase.firestore.Timestamp.fromDate(new Date())
+      replyComment.rating = {
+        likes: [],
+        dislikes: [],
+      }
+    }
+
+    let commentRef = db
+      .collection('abandonedPlaces')
+      .doc(abandonedPlaceID)
+      .collection('comments')
+      .doc(comment.id)
+      .collection('replyComments')
+      .doc(replyComment.id)
+
+    commentRef.withConverter(commentConverter).set(replyComment, {
+      merge: true,
+    })
+  } catch (error) {
+    console.error('Error writing document: ', error)
+    return
+  }
+}
+
 export const getComment = async (
   abandonedPlaceID: string | undefined,
   commentId: string

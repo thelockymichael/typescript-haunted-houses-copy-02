@@ -56,7 +56,7 @@ const AbandonedPlaceComments: React.FC<IProps> = ({
         <CommentItem
           user={user}
           abandonedPlaceID={abandonedPlaceID}
-          commentItem={item}
+          mainComment={item}
           onShowPopUp={onShowPopUp}
         />
       )}

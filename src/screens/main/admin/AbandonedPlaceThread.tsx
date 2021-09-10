@@ -8,13 +8,27 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native'
 import {Divider} from 'react-native-paper'
-import {CommentItem, Header} from '../../../components'
+import {
+  AbandonedPlaceCommentInput,
+  BottomPopup,
+  CommentItem,
+  CustomAlert,
+  Header,
+} from '../../../components'
 import {color} from '../../../constants'
 import {UserContext} from '../../../contexts/contexts'
-import {getComment} from '../../../controllers/commentController'
+import {
+  getComment,
+  updateComment,
+  updateCommentOfComment,
+} from '../../../controllers/commentController'
 import {CommentModel, UserModel} from '../../../redux'
+import {FlatList, ScrollView} from 'react-native-gesture-handler'
+import {createRef} from 'react'
 
 interface IProps {
   navigation: {
@@ -25,62 +39,230 @@ interface IProps {
   route: {
     params: {
       abandonedPlaceID?: string
-      commentItem: CommentModel
+      mainComment: CommentModel
       // onShowPopUp: (comment: CommentModel) => void
       // user: UserModel
     }
   }
 }
 const AbandonedPlaceThread: React.FC<IProps> = ({navigation, route}) => {
-  const {abandonedPlaceID, commentItem} = route.params
+  const {abandonedPlaceID, mainComment} = route.params
 
   const {user} = useContext(UserContext)
 
-  const [comment, setComment] = useState<CommentModel>(commentItem)
+  const [comment, setComment] = useState<CommentModel>(mainComment)
 
-  console.log('commentItem Thread-423', commentItem)
-  console.log('commentItem user-423', user)
-  // console.log('commentItem onShowpopup-423', onShowPopUp)
-  // console.log('commentItem navigation-423', navigation)
+  const [replies, setReplyComments] = useState<CommentModel[]>()
+
+  // 2. Commenting
+  const [inputComment, setInputComment] = useState<string>('')
+  const [submitToggle, setSubmitToggle] = useState<boolean>(true)
+
+  // 3. Popup list
+  const [popUpList, setPopUpList] = useState([])
+
+  /// 4. Alert Modal Visibility
+  const [modal, setModal] = useState<CustomAlertProps>({
+    onPressNegativeButton: () => onPressAlertNegativeButton(),
+    onPressPositiveButton: () => onPressAlertPositiveButton(),
+    displayAlert: false,
+    alertTitleText: '',
+    alertMessageText: '',
+    displayPositiveButton: false,
+    positiveButtonText: '',
+    displayNegativeButton: false,
+    negativeButtonText: '',
+  })
 
   useEffect(() => {
-    const commentsListener = firebase
+    const commentListener = firebase
       .firestore()
       .collection('abandonedPlaces')
       .doc(abandonedPlaceID)
       .collection('comments')
-      .doc(commentItem.id)
+      .doc(comment.id)
+      .collection('replyComments')
+      .orderBy('createdAt', 'asc')
+      .onSnapshot((querySnapshot) => {
+        const replies = querySnapshot.docs.map((doc) => {
+          return {
+            ...doc.data(),
+          }
+        })
+
+        setReplyComments(replies)
+      })
+
+    return () => commentListener()
+  }, [])
+
+  useEffect(() => {
+    const commentListener = firebase
+      .firestore()
+      .collection('abandonedPlaces')
+      .doc(abandonedPlaceID)
+      .collection('comments')
+      .doc(mainComment.id)
       .onSnapshot((querySnapshot) => {
         const comment = querySnapshot.data()
 
         setComment(comment)
       })
 
-    return () => commentsListener()
+    return () => commentListener()
   }, [])
 
+  let popUpRef = createRef()
+
+  // Popup menu
+  const onShowPopUp = (comment: CommentModel): void => {
+    setPopUpList([
+      {
+        id: 1,
+        name: 'Delete comment',
+        onTap: () => onDeleteComment(comment),
+      },
+    ])
+    popUpRef.show()
+  }
+
+  // Delete alert dialog
+  const onDeleteComment = (comment: CommentModel) => {
+    // setModalVisible(true)
+
+    console.log('modalVisible 1', modal)
+
+    setModal({
+      onPressNegativeButton: () => onPressAlertNegativeButton(),
+      onPressPositiveButton: async () => {
+        deleteComment(item.id, comment)
+        onPressAlertPositiveButton()
+      },
+      displayAlert: true,
+      alertTitleText: 'Delete',
+      alertMessageText: 'Are you sure you want to delete this message?',
+      displayPositiveButton: true,
+      positiveButtonText: 'OK',
+      displayNegativeButton: true,
+      negativeButtonText: 'CANCEL',
+    })
+  }
+
+  const validateCommentText = (text: string) => {
+    console.log('text', text)
+    console.log('is text empty? ""', text.length)
+
+    if (text.length > 0) {
+      setSubmitToggle(false)
+    } else if (text.length === 0) {
+      setSubmitToggle(true)
+    }
+
+    setInputComment(text)
+  }
+
+  const submitComment = async (): Promise<void> => {
+    await updateCommentOfComment(abandonedPlaceID, comment, {
+      username: 'MISKA',
+      commentText: inputComment,
+    })
+
+    validateCommentText('')
+  }
+
+  const onClosePopup = () => {
+    popUpRef.close()
+  }
+
+  const onPressAlertPositiveButton = () => {
+    // alert('Positive Button Clicked')
+    setModal({...modal, displayAlert: false})
+  }
+
+  const onPressAlertNegativeButton = () => {
+    // alert('Negative Button Clicked')
+    setModal({...modal, displayAlert: false})
+  }
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 40}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <Header navigation={navigation} headerTitle="Thread" />
-      <CommentItem
-        user={user}
-        abandonedPlaceID={abandonedPlaceID}
-        commentItem={commentItem}
-        // onShowPopUp={onShowPopUp}
+
+      <ScrollView>
+        <View style={styles.bodyContent}>
+          <CommentItem
+            isThreadPage={true}
+            user={user}
+            abandonedPlaceID={abandonedPlaceID}
+            mainComment={mainComment}
+            // onShowPopUp={onShowPopUp}
+          />
+          <FlatList
+            data={replies}
+            inverted={true}
+            ItemSeparatorComponent={() => <Divider />}
+            renderItem={({item}) => (
+              <CommentItem
+                user={user}
+                abandonedPlaceID={abandonedPlaceID}
+                mainComment={mainComment}
+                replyComment={item}
+                onShowPopUp={onShowPopUp}
+                isReply={true}
+              />
+            )}
+          />
+          <Divider />
+        </View>
+      </ScrollView>
+      <AbandonedPlaceCommentInput
+        comment={inputComment}
+        setComment={setInputComment}
+        submitComment={submitComment}
+        submitToggle={submitToggle}
+        validateCommentText={validateCommentText}
       />
-      <Divider />
-    </View>
+      <BottomPopup
+        title="Demo Popup"
+        ref={(target) => (popUpRef = target)}
+        onTouchOutside={onClosePopup}
+        data={popUpList}
+      />
+      <CustomAlert {...modal} />
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: color.bgColor},
-  body: {
+  container: {
     flex: 10,
+    backgroundColor: color.bgColor,
+  },
+  customBtn: {
+    backgroundColor: color.primaryColor,
+  },
+
+  body: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'yellow',
   },
+  imageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bodyContent: {
+    marginTop: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: '#FFF',
+    width: '100%',
+  },
+  description: {fontSize: 20, fontFamily: 'open-sans-regular'},
+  location: {fontSize: 18, fontFamily: 'open-sans-regular'},
 })
 
 export {AbandonedPlaceThread}

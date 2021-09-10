@@ -6,5 +6,5 @@ export interface CommentModel {
   username: string
   commentText: string
   createdAt?: firebase.firestore.Timestamp
-  rating: Rating
+  rating?: Rating
 }
