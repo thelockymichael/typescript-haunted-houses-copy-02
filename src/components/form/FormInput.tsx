@@ -7,7 +7,6 @@ const {width, height} = Dimensions.get('screen')
 
 interface FormInputProps {
   labelName: string
-  inputName: string
   onTextChange: Function
   value: string
   testID?: string
@@ -20,7 +19,6 @@ interface FormInputProps {
 
 const FormInput: React.FC<FormInputProps> = ({
   labelName,
-  inputName,
   onTextChange,
   testID,
   multiline,
@@ -35,7 +33,7 @@ const FormInput: React.FC<FormInputProps> = ({
       label={labelName}
       style={{...styles.input, ...extraStyle}}
       numberOfLines={numberOfLines || 1}
-      onChangeText={(text) => onTextChange(text, inputName)}
+      onChangeText={(text) => onTextChange(text)}
       maxLength={100}
       {...rest}
     />

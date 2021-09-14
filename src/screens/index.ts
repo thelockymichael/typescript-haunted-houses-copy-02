@@ -8,3 +8,7 @@ export * from './main/admin/AbandonedPlacesScreen'
 export * from './main/admin/AbandonedPlacesEdit'
 export * from './main/admin/AbandonedPlaceDetails'
 export * from './main/admin/AbandonedPlaceThread'
+
+// Setup
+
+export * from './user-setup/UsernameSetup'

@@ -45,6 +45,8 @@ import {UserContext} from './src/contexts/contexts'
 
 // Expo updates
 import * as Updates from 'expo-updates'
+import {UsernameSetup} from './src/screens'
+import {SetupUserNavigator} from './src/navigators/SetupStackNavigator'
 
 interface AppNavigatorProps {
   userId: string | null
@@ -60,17 +62,19 @@ const AppNavigator: React.FC<AppNavigatorProps> = ({userId, isLoading}) => {
   } else {
     let userRef = userStream(userId)
 
-    const [user] = useDocumentData(userRef)
+    const [user] = useDocumentData<UserModel>(userRef)
 
     if (user !== undefined) {
       // If setup is not completed
 
-      if (user.expoToken === undefined || user.id === undefined) {
+      if (
+        user.expoToken === undefined ||
+        user.id === undefined ||
+        user.userName === undefined
+      ) {
         return (
           <UserContext.Provider value={{user}}>
-            <View>
-              <Text>SetupStackNavigator</Text>
-            </View>
+            <SetupUserNavigator />
           </UserContext.Provider>
         )
       } else {

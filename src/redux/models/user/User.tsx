@@ -3,6 +3,7 @@ export interface UserModel {
   // expoToken?: string | undefined | null
   id: string
   expoToken: string
+  userName: string
   // firstName: string
   // lastName: string
   // contactNumber: string
