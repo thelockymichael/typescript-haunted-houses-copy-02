@@ -21,10 +21,13 @@ interface IProps {
     goBack: Function
   }
 }
+
+// TODO Check that username is unique
+
 const UsernameSetup: React.FC<IProps> = ({navigation}) => {
   const {user} = useContext(UserContext)
 
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState<string>(user.userName)
 
   const submitName = async () => {
     const userNameRegex = /^[A-Za-z][A-Za-z0-9_]{7,29}$/
@@ -34,6 +37,8 @@ const UsernameSetup: React.FC<IProps> = ({navigation}) => {
     } else {
       try {
         await updateUser({...user, userName: username})
+
+        await navigation.navigate('OptionalInfoSetup')
       } catch (err) {
         throw new Error(err)
       }
@@ -42,7 +47,6 @@ const UsernameSetup: React.FC<IProps> = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Header navigation={navigation} />
       <View style={styles.body}>
         <Text style={styles.questionTextStyle}>What is your </Text>
         <FormInput

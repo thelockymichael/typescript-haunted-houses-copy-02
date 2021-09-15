@@ -12,3 +12,4 @@ export * from './main/admin/AbandonedPlaceThread'
 // Setup
 
 export * from './user-setup/UsernameSetup'
+export * from './user-setup/OptionalInfoSetup'

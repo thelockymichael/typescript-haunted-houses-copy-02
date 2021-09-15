@@ -1,7 +1,7 @@
 import {createStackNavigator} from '@react-navigation/stack'
 import {createDrawerNavigator} from '@react-navigation/drawer'
 import React from 'react'
-import {UsernameSetup} from '../screens'
+import {OptionalInfoSetup, UsernameSetup} from '../screens'
 
 const SetupUserStack = createStackNavigator()
 
@@ -14,6 +14,10 @@ const SetupUserNavigator = () => {
       }}
     >
       <SetupUserStack.Screen name="UsernameSetup" component={UsernameSetup} />
+      <SetupUserStack.Screen
+        name="OptionalInfoSetup"
+        component={OptionalInfoSetup}
+      />
     </SetupUserStack.Navigator>
   )
 }

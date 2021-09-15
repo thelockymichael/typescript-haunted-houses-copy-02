@@ -70,7 +70,13 @@ const AppNavigator: React.FC<AppNavigatorProps> = ({userId, isLoading}) => {
       if (
         user.expoToken === undefined ||
         user.id === undefined ||
-        user.userName === undefined
+        user.userName === undefined ||
+        user.optionalInfo?.firstName === undefined ||
+        user.optionalInfo?.lastName === undefined ||
+        user.optionalInfo?.homeMunicipality === undefined ||
+        user.optionalInfo?.postCode === undefined ||
+        user.optionalInfo?.address === undefined ||
+        user.optionalInfo?.phoneNum === undefined
       ) {
         return (
           <UserContext.Provider value={{user}}>
