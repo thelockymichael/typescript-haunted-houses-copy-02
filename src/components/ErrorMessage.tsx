@@ -10,6 +10,7 @@ import {
 
 interface ErrorMessageProps {
   value?: string
+  positiveMessage: string
 }
 const ErrorMessage: React.FC<ErrorMessageProps> = ({value}) => {
   return (

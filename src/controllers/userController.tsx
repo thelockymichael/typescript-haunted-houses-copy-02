@@ -22,7 +22,11 @@ export async function updateUser(user: UserModel) {
     // Add a new document in collection "users"
     let userRef = db.collection('users').doc(user.id)
 
+    let usernameRef = db.collection('usernames').doc(user.userName)
+
     await userRef.withConverter(userConverter).set(user, {merge: true})
+
+    await usernameRef.withConverter(userConverter).set(user, {merge: true})
   } catch (error) {
     console.error('Error writing document: ', error)
   }

@@ -95,6 +95,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
 
   useEffect(() => {
     ;(async () => {
+      // const helloResponse = await fetch(
+      //   `https://us-central1-typescript-haunted-houses.cloudfunctions.net/helloWorld`,
+      //   {
+      //     method: 'GET',
+      //     headers: {
+      //       // "Access-Control-Allow-Origin": *,
+      //       mode: 'cors', // no-cors, *cors, same-origin
+      //       Accept: 'application/json',
+      //       'Content-Type': 'application/json',
+      //     },
+      //     // body: JSON.stringify({idToken: token.token}),
+      //   }
+      // )
+
+      // console.log('helloResponse-231', helloResponse)
+
+      // const response = await fetch(
+      //   `https://us-central1-typescript-haunted-houses.cloudfunctions.net/checkUsernames`,
+      //   {
+      //     method: 'GET',
+      //     headers: {
+      //       // "Access-Control-Allow-Origin": *,
+      //       // mode: 'cors', // no-cors, *cors, same-origin
+      //       Accept: 'application/json',
+      //       'Content-Type': 'application/json',
+      //     },
+      //     // body: JSON.stringify({idToken: token.token}),
+      //   }
+      // )
+
+      // console.log('respekt-231', await response.json())
+
       const result = await getAbandonedPlaces()
 
       const groupArr = groupArrayOfObjects(result)
