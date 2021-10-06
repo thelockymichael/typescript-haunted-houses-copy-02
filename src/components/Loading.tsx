@@ -1,10 +1,15 @@
 import React from 'react'
-import {View, ActivityIndicator, StyleSheet} from 'react-native'
-const Loading = () => {
+import {View, ActivityIndicator, Text, StyleSheet} from 'react-native'
+
+interface IProps {
+  isLoading: boolean
+}
+
+const Loading: React.FC<IProps> = ({isLoading}) => {
   return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#6646ee" />
-    </View>
+    <>
+      {isLoading ? <ActivityIndicator size="large" color="#6646ee" /> : <></>}
+    </>
   )
 }
 

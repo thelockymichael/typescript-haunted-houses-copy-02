@@ -9,7 +9,11 @@ import {
   View,
 } from 'react-native'
 
-import firebase from './src/firebase/fire'
+import {
+  Colors,
+  DefaultTheme,
+  Provider as PaperProvider,
+} from 'react-native-paper'
 
 // Loading & Fonts setuo
 import * as Font from 'expo-font'
@@ -18,7 +22,7 @@ import AppLoading from 'expo-app-loading'
 
 // Redux
 import {Provider} from 'react-redux'
-import {store, subscribeToAuth, UserModel} from './src/redux'
+import {logOut, store, subscribeToAuth, UserModel} from './src/redux'
 // [END]
 
 // Navigation
@@ -36,7 +40,7 @@ import * as Notifications from 'expo-notifications'
 
 // GlobalStyles
 
-import {SafeViewAndroid} from './src/constants'
+import {color, SafeViewAndroid} from './src/constants'
 import {userStream} from './src/controllers/userController'
 
 // FirebaseHooks
@@ -64,11 +68,15 @@ const AppNavigator: React.FC<AppNavigatorProps> = ({userId, isLoading}) => {
 
     const [user] = useDocumentData<UserModel>(userRef)
 
+    // logOut()
+    console.log('userus.-231', userId)
+
     if (user !== undefined) {
       // If setup is not completed
 
       if (
-        user.expoToken === undefined ||
+        // TODO User has to have expoToken assigned at all times
+        // user.expoToken === undefined ||
         user.id === undefined ||
         user.userName === undefined ||
         user.optionalInfo?.firstName === undefined ||
@@ -153,13 +161,25 @@ export default function App() {
     return <AppLoading />
   }
 
+  const theme = {
+    ...DefaultTheme,
+    roundness: 2,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: color.primaryColor,
+      accent: color.secondaryColor,
+    },
+  }
+
   return (
     <Provider store={store}>
-      <SafeAreaView style={SafeViewAndroid.AndroidSafeArea}>
-        <NavigationContainer>
-          <AppNavigator userId={userId} isLoading={isLoading} />
-        </NavigationContainer>
-      </SafeAreaView>
+      <PaperProvider theme={theme}>
+        <SafeAreaView style={SafeViewAndroid.AndroidSafeArea}>
+          <NavigationContainer>
+            <AppNavigator userId={userId} isLoading={isLoading} />
+          </NavigationContainer>
+        </SafeAreaView>
+      </PaperProvider>
     </Provider>
   )
 }

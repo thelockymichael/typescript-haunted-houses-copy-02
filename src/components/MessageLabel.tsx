@@ -8,15 +8,21 @@ import {
   Image,
 } from 'react-native'
 
-interface ErrorMessageProps {
+interface IProps {
   value?: string
-  positiveMessage: string
-  negativeMessage: string
+  type: 'positive' | 'negative'
 }
-const ErrorMessage: React.FC<ErrorMessageProps> = ({value}) => {
+const MessageLabel: React.FC<IProps> = ({value, type}) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.errorText}>{value}</Text>
+      <Text
+        style={{
+          ...styles.errorText,
+          color: type === 'positive' ? 'green' : 'red',
+        }}
+      >
+        {value}
+      </Text>
     </View>
   )
 }
@@ -29,4 +35,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export {ErrorMessage}
+export {MessageLabel}

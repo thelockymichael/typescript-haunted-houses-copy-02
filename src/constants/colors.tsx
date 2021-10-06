@@ -4,6 +4,5 @@ export const color = {
   bgColor: '#FFF',
 
   // Rating
-
   greyedOutColor: '#AAAFB4',
 }

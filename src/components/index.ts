@@ -2,6 +2,7 @@ export * from './form/FormInput'
 export * from './form/FormButton'
 export * from './Loading'
 export * from './ErrorMessage'
+export * from './MessageLabel'
 
 // Edit
 export * from './form/edit/MapPreview'
